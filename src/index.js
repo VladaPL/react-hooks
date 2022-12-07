@@ -1,26 +1,70 @@
-import React, { useContext } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
-const MyContext = React.createContext(); // для создания контекста
+// Приложение для проверки всех методов жизненного цикла
+// Счетчик - componentDidUpdate -> компонент обновился
+// Скрываем счетчик - componentWillUnmount -> 
+// Показываем счетчик - componentDidMount -> компонент впервые появился на странице
 
-// Провайдер предоставляет значение контекста всем компонентам ниже по иерархии
+// Это важно понимать, так как ф-ия useEffect вызывается,
+// когда срабатывает componentDidUpdate и componentDidMount.
+
 
 const App = () => {
+  const [value, setValue] = useState(0);
+  const [visible, setVisible] = useState(true);
 
-  return (
-    <MyContext.Provider value={'Hello world 12345'}>
-        <Child/>
-    </MyContext.Provider>
-  );
+
+  if (visible) {
+    return (
+      <div>
+        <button onClick={() => setValue((v) => v + 1)}>
+          Increase by one
+        </button>
+        <button onClick={() => setVisible(false)}>
+          Hide
+        </button>
+        <ClassCounter value={value}/>
+        <HookCounter value={value}/>
+      </div>
+    );
+  } else {
+      return <button onClick={() => setVisible(true)}>Show</button>
+  }
+
 };
 
-// При использовании хука меням только код в чаилд
+// useEffect регистрирует ф-ию, у которой могут быть побочные эффекты.
 
-const Child = () => {
-  const value = useContext(MyContext); // Передаем аргументом именно объект-контекст MyContext, а не Consumer.
-
-    return <p>{value}</p>;
+const HookCounter = ({value}) => {
+  useEffect(() => {
+    console.log('побочный эффект')
+  }, [value]); 
+  // Если передано значение в массиве вторым аргументом, то ф-ия вызывается только при его изменении.
+  // Если аргумент пустой массив, то ф-ия вызывается только один раз и не зависит от данных.
+  return <p>value</p>;
 };
+
+class ClassCounter extends Component {
+
+  componentDidMount() {
+    console.log('class: mount')
+  }
+
+  componentDidUpdate(props) {
+    console.log('class: update')
+  }
+
+  componentWillUnmount() {
+    console.log('class: unmount')
+  }
+
+  render() {
+    return <p>{this.props.value}</p>
+  }
+
+}
+
 
 
 
