@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import ReactDOM from 'react-dom/client';
 
 const MyContext = React.createContext(); // для создания контекста
 
 // Провайдер предоставляет значение контекста всем компонентам ниже по иерархии
-
-
 
 const App = () => {
 
@@ -16,16 +14,12 @@ const App = () => {
   );
 };
 
+// При использовании хука меням только код в чаилд
+
 const Child = () => {
-    return (
-        <MyContext.Consumer>
-            {
-                (value) => {
-                    return (<p>{value}</p>)
-                }
-            }
-        </MyContext.Consumer>
-    );
+  const value = useContext(MyContext); // Передаем аргументом именно объект-контекст MyContext, а не Consumer.
+
+    return <p>{value}</p>;
 };
 
 
