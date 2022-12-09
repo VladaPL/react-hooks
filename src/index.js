@@ -1,80 +1,70 @@
-import React, { Component, useEffect, useState } from 'react';
-import ReactDOM from 'react-dom/client';
-
-// Приложение для проверки всех методов жизненного цикла
-// Счетчик - componentDidUpdate -> компонент обновился
-// Скрываем счетчик - componentWillUnmount -> 
-// Показываем счетчик - componentDidMount -> компонент впервые появился на странице
-
-// Это важно понимать, так как ф-ия useEffect вызывается,
-// когда срабатывает componentDidUpdate и componentDidMount.
-// useEffect ф-ия зависящая от данных, запусткается каждый раз, когда набор данных меняется.
-
+import React, { Component, useEffect, useState } from "react";
+import ReactDOM from "react-dom/client";
 
 const App = () => {
-  const [value, setValue] = useState(0);
-  const [visible, setVisible] = useState(true);
+    const [value, setValue] = useState(0);
+    const [visible, setVisible] = useState(true);
 
-
-  if (visible) {
-    return (
-      <div>
-        <button onClick={() => setValue((v) => v + 1)}>
-          Increase by one
-        </button>
-        <button onClick={() => setVisible(false)}>
-          Hide
-        </button>
-        <ClassCounter value={value}/>
-        <HookCounter value={value}/>
-      </div>
-    );
-  } else {
-      return <button onClick={() => setVisible(true)}>Show</button>
-  }
-
+    if (visible) {
+        return (
+            <div>
+                <button onClick={() => setValue((v) => v + 1)}>
+                    Увеличить значение на единицу
+                </button>
+                <button onClick={() => setVisible(false)}>Скрыть элементы</button>
+                <ClassCounter value={value} />
+                <HookCounter value={value} />
+                <Notification />
+            </div>
+        );
+    } else {
+        return <button onClick={() => setVisible(true)}>Показать элементы</button>;
+    }
 };
 
 // useEffect регистрирует ф-ию, у которой могут быть побочные эффекты.
 
-const HookCounter = ({value}) => {
-  useEffect(() => {
-    console.log('побочный эффект')
+const HookCounter = ({ value }) => {
+    // 1) Создадим ф-ию, которая вызовется только один раз при создании компонента (имитация componentDidMount)
+    useEffect(() => console.log("mount"), []); // передаем пустой массив вторым аргументом
 
-    return () => console.log('clear'); // Если вернуть ф-ию то будет очистка предыдущего эффекта.
-  }, [value]); 
-  // Если передано значение в массиве вторым аргументом, то ф-ия вызывается только при его изменении.
-  // Если аргумент пустой массив, то ф-ия вызывается только один раз и не зависит от данных.
-  return <p>value</p>;
+    // 2) Создадим ф-ию, которая вызовется при обновлении компонента
+    // Примечание: имитация componentDidUpdate, только DidUpdate не вызывается, когда создан первый раз, в отличии от useEffect
+    useEffect(() => console.log("update")); // не передаем массив в качесве второго аргумента
+
+    // 3) Создадим ф-ию, которая вызовется при размонтировнии компонента (componentWillUnMount)
+    useEffect(() => () => console.log("unmount"), []); // Если вернуть ф-ию то будет очистка предыдущего эффекта.
+
+    // Примечание: запись третьего варианта для очистки используется редко, чаще встречается это:
+    // useEffect(() => {
+    //     console.log('mount');
+    //     return () => console.log('unmount');
+    // }, []);
+
+    return <p>Обрати внимание, как работает useEffect в консоли.</p>;
 };
 
 class ClassCounter extends Component {
-
-  componentDidMount() {
-    console.log('class: mount')
-  }
-
-  componentDidUpdate(props) {
-    console.log('class: update')
-  }
-
-  componentWillUnmount() {
-    console.log('class: unmount')
-  }
-
-  render() {
-    return <p>{this.props.value}</p>
-  }
-
+    render() {
+        return <p>{this.props.value}</p>;
+    }
 }
 
+// 4) effect + cleanup ( mount + unmount)
 
+const Notification = () => {
+    const [visible, setVisible] = useState(true);
+    useEffect(() => {
+        const timeout = setTimeout(() => setVisible(false), 3000);
+        return () => clearTimeout(timeout); // возврат предотвращает утечку памяти
+    }, []);
 
+    return <div>{visible && <p>Это сообщение пропадет через 3 секунды!</p>}</div>;
+};
 
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>
 );
