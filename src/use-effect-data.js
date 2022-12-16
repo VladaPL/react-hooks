@@ -25,27 +25,21 @@ const App = () => {
     }
 };
 
-// * Создание собственных хуков.
-
-const usePlanetInfo = (id) => {
-    // Если перед ф-ией "use", то реакт воспринимает ее как хук.
-    const [name, setName] = useState(null);
-
-    useEffect(() => {
-        let cancelled = false;
-        fetch(`https://swapi.dev/api/planets/${id}`)
-            .then((res) => res.json())
-            .then((data) => !cancelled && setName(data.name));
-        return () => (cancelled = true);
-    }, [id]);
-
-    return name;
-};
+// Promise нельзя отменить, но можно проигнорировать результат.
 
 const PlanetInfo = ({ id }) => {
-    // Этому компоненту теперь не важно, откуда данные, он их только отображает, получив актуальное значение через props по id.
-    // Такое переиспользование кода - это альтернатива использования HOC.
-    const name = usePlanetInfo(id);
+    const [name, setName] = useState(null);
+    // Для обхода ситуации race condition, используем такой способ очистки useEffect:
+    let cancelled = false; // Показывает нужно выполнять действие, или нужно игнорировать его.
+    useEffect(() => {
+        fetch(`https://swapi.dev/api/planets/${id}`)
+            .then((res) => res.json())
+            .then((data) => !cancelled && setName(data.name)); // если cancelled = false, то выполняем setName
+        return () => (cancelled = true); // ф-ия, очистки эффекта
+    }, [id]);
+
+    // Таким образом, если значение от сервера не успеет дойти к моменту следующего переключения id,
+    // то это значение не будет выводиться. Сам запрос не отменяется, но вывода данных не будет.
 
     return (
         <div>
@@ -53,27 +47,6 @@ const PlanetInfo = ({ id }) => {
         </div>
     );
 };
-
-// * Сравни как было без создания хука usePlanetInfo.
-
-// const PlanetInfo = ({ id }) => {
-
-//     const [name, setName] = useState(null);
-//     let cancelled = false;
-
-//     useEffect(() => {
-//         fetch(`https://swapi.dev/api/planets/${id}`)
-//             .then((res) => res.json())
-//             .then((data) => !cancelled && setName(data.name));
-//         return () => (cancelled = true);
-//     }, [id]);
-
-//     return (
-//         <div>
-//             {id} - {name}
-//         </div>
-//     );
-// };
 
 class ClassCounter extends Component {
     render() {
