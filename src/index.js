@@ -1,4 +1,10 @@
-import React, { Component, useEffect, useState } from "react";
+import React, {
+    Component,
+    useEffect,
+    useState,
+    useCallback,
+    useMemo,
+} from "react";
 import ReactDOM from "react-dom/client";
 
 const App = () => {
@@ -25,55 +31,56 @@ const App = () => {
     }
 };
 
-// * Создание собственных хуков.
+// *  Тема: Рефакторинг кода own-hooks. useCallback and useMemo.
 
-const usePlanetInfo = (id) => {
-    // Если перед ф-ией "use", то реакт воспринимает ее как хук.
-    const [name, setName] = useState(null);
+// useCallback() - сохраняет ф-ию между вызовами, если данные в массиве зависимостей не изменились.
+// useMemo() - работает также, но для значений.
+
+// f - функция из первого аргумента
+// const f = useCallback(() => loadData(id), [id]);
+
+// v - результат функции из первого аргумента
+// const v = useMemo(() => getValue(id), [id]);
+
+// 1) разделим usePlanetInfo на компонент для получения данных с сервера и
+
+const getPlanet = (id) => {
+    return fetch(`https://swapi.dev/api/planets/${id}`)
+        .then((res) => res.json())
+        .then((data) => data);
+};
+
+const useRequest = (request) => {
+    // аргумент request - это ф-ия, которая возвращает промис.
+    const [dataState, setDataState] = useState(null);
 
     useEffect(() => {
         let cancelled = false;
-        fetch(`https://swapi.dev/api/planets/${id}`)
-            .then((res) => res.json())
-            .then((data) => !cancelled && setName(data.name));
+        request().then((data) => !cancelled && setDataState(data));
         return () => (cancelled = true);
-    }, [id]);
+    }, [request]);
 
-    return name;
+    return dataState;
+};
+
+// Каждый раз когда мы вызываем usePlanetInfo запрос создается заново.
+// Чтобы исправить это, нужно использовать useCallback.
+// Проверить количество отправляемых на сервер запросов можно через владку Network Devtools.
+
+const usePlanetInfo = (id) => {
+    const request = useCallback(() => getPlanet(id), [id]);
+    return useRequest(request);
 };
 
 const PlanetInfo = ({ id }) => {
-    // Этому компоненту теперь не важно, откуда данные, он их только отображает, получив актуальное значение через props по id.
-    // Такое переиспользование кода - это альтернатива использования HOC.
-    const name = usePlanetInfo(id);
+    const data = usePlanetInfo(id);
 
     return (
         <div>
-            {id} - {name}
+            {id} - {data && data.name}
         </div>
     );
 };
-
-// * Сравни как было без создания хука usePlanetInfo.
-
-// const PlanetInfo = ({ id }) => {
-
-//     const [name, setName] = useState(null);
-//     let cancelled = false;
-
-//     useEffect(() => {
-//         fetch(`https://swapi.dev/api/planets/${id}`)
-//             .then((res) => res.json())
-//             .then((data) => !cancelled && setName(data.name));
-//         return () => (cancelled = true);
-//     }, [id]);
-
-//     return (
-//         <div>
-//             {id} - {name}
-//         </div>
-//     );
-// };
 
 class ClassCounter extends Component {
     render() {
