@@ -33,7 +33,7 @@ const App = () => {
 
 // *  Тема: Рефакторинг кода own-hooks. useCallback and useMemo.
 
-// useCallback() - сохраняет ф-ию между вызовами, если данные в массиве зависимостей не изменились.
+// useCallback() - сохраняет (кеширует) ф-ию между вызовами, если данные в массиве зависимостей не изменились.
 // useMemo() - работает также, но для значений.
 
 // f - функция из первого аргумента
@@ -42,7 +42,7 @@ const App = () => {
 // v - результат функции из первого аргумента
 // const v = useMemo(() => getValue(id), [id]);
 
-// 1) разделим usePlanetInfo на компонент для получения данных с сервера и
+// разделим usePlanetInfo на компонент для получения данных с сервера и компонент обработчик данных запроса
 
 const getPlanet = (id) => {
     return fetch(`https://swapi.dev/api/planets/${id}`)
@@ -53,11 +53,14 @@ const getPlanet = (id) => {
 const useRequest = (request) => {
     // аргумент request - это ф-ия, которая возвращает промис.
 
-    const initialState = {
-        data: null,
-        loading: true,
-        error: null,
-    };
+    const initialState = useMemo(
+        () => ({
+            data: null,
+            loading: true,
+            error: null,
+        }),
+        []
+    );
 
     const [dataState, setDataState] = useState(initialState);
 
@@ -80,7 +83,7 @@ const useRequest = (request) => {
                     })
             );
         return () => (cancelled = true);
-    }, [request]);
+    }, [request, initialState]);
 
     return dataState;
 };
